@@ -87,21 +87,21 @@ def dashboard():
     t_30d = (now - timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')
     
     cursor.execute("SELECT COUNT(*) FROM users")
-    total_users = cursor.fetchone()
+    total_users = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM users WHERE last_active >= ?", (t_24h,))
-    active_24h = cursor.fetchone()
+    active_24h = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM users WHERE last_active >= ?", (t_7d,))
-    active_7d = cursor.fetchone()
+    active_7d = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM users WHERE last_active >= ?", (t_30d,))
-    active_30d = cursor.fetchone()
+    active_30d = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM users WHERE join_date >= ?", (t_24h,))
-    new_24h = cursor.fetchone()
+    new_24h = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM users WHERE join_date >= ?", (t_7d,))
-    new_7d = cursor.fetchone()
+    new_7d = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM users WHERE join_date >= ?", (t_30d,))
-    new_30d = cursor.fetchone()
+    new_30d = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM users WHERE is_blocked = 1")
-    blocked = cursor.fetchone()
+    blocked = cursor.fetchone()[0]
     
     conn.close()
 
@@ -144,7 +144,7 @@ def dashboard():
             <div class="card"><div class="title">Total Users</div><div class="num">{{total_users}}</div></div>
             <div class="card c-active-24"><div class="title">Active (24H)</div><div class="num">{{active_24h}}</div></div>
             <div class="card"><div class="title">Active (7D)</div><div class="num">{{active_7d}}</div></div>
-            <div class="card"><div class="title">Active (30D)</div><div class="num">{{active_30d}</div></div>
+            <div class="card"><div class="title">Active (30D)</div><div class="num">{{active_30d}}</div></div>
             <div class="card c-new-24"><div class="title">New (24H)</div><div class="num">{{new_24h}}</div><div class="sub">joined today</div></div>
             <div class="card"><div class="title">New (7D)</div><div class="num">{{new_7d}}</div></div>
             <div class="card"><div class="title">New (30D)</div><div class="num">{{new_30d}}</div></div>
@@ -159,4 +159,4 @@ if __name__ == '__main__':
     init_db()
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
-      
+        
