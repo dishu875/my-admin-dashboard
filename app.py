@@ -4,8 +4,11 @@ from datetime import datetime, timedelta
 import random
 from flask import Flask, render_template_string, request, jsonify
 
+# डेटाबेस का नाम एक जगह फिक्स कर दिया ताकि कोई गड़बड़ न हो
+DB_NAME = 'dark_analytics.db'
+
 def init_db():
-    conn = sqlite3.connect('online_analytics.db')
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
@@ -16,9 +19,10 @@ def init_db():
             is_dummy INTEGER DEFAULT 0
         )
     ''')
+    conn.commit()
     
     cursor.execute("SELECT COUNT(*) FROM users")
-    if cursor.fetchone() == 0:
+    if cursor.fetchone()[0] == 0:
         now = datetime.now()
         my_custom_id = "admin_boss"
         try:
@@ -26,6 +30,7 @@ def init_db():
                 "INSERT INTO users (user_id, join_date, last_active, is_blocked, is_dummy) VALUES (?, ?, ?, 0, 0)",
                 (my_custom_id, now.strftime('%Y-%m-%d %H:%M:%S'), now.strftime('%Y-%m-%d %H:%M:%S'))
             )
+            conn.commit()
         except:
             pass
 
@@ -53,7 +58,7 @@ def track_user():
     if not user_id:
         return jsonify({"status": "error"}), 400
         
-    conn = sqlite3.connect('online_analytics.db')
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
@@ -69,7 +74,7 @@ def track_user():
 
 @app.route('/clean')
 def clean_dummy_data():
-    conn = sqlite3.connect('online_analytics.db')
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute("DELETE FROM users WHERE is_dummy = 1")
     conn.commit()
@@ -78,7 +83,10 @@ def clean_dummy_data():
 
 @app.route('/')
 def dashboard():
-    conn = sqlite3.connect('online_analytics.db')
+    # हर बार पेज लोड होने से पहले पक्का करें कि डेटाबेस और टेबल बनी हुई है
+    init_db()
+    
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     
     now = datetime.now()
@@ -141,14 +149,14 @@ def dashboard():
         <div class="header">Admin Panel</div>
         <div class="tabs"><div class="tab active">Analytics</div><div class="tab">Users</div><div class="tab">Broadcasts</div></div>
         <div class="grid">
-            <div class="card"><div class="title">Total Users</div><div class="num">{{total_users}}</div></div>
-            <div class="card c-active-24"><div class="title">Active (24H)</div><div class="num">{{active_24h}}</div></div>
-            <div class="card"><div class="title">Active (7D)</div><div class="num">{{active_7d}}</div></div>
-            <div class="card"><div class="title">Active (30D)</div><div class="num">{{active_30d}}</div></div>
-            <div class="card c-new-24"><div class="title">New (24H)</div><div class="num">{{new_24h}}</div><div class="sub">joined today</div></div>
-            <div class="card"><div class="title">New (7D)</div><div class="num">{{new_7d}}</div></div>
-            <div class="card"><div class="title">New (30D)</div><div class="num">{{new_30d}}</div></div>
-            <div class="card c-blocked"><div class="title">Blocked</div><div class="num">{{blocked}}</div></div>
+            <div class="card"><div class="title">Total Users</div><div class="num">{total_users}</div></div>
+            <div class="card c-active-24"><div class="title">Active (24H)</div><div class="num">{active_24h}</div></div>
+            <div class="card"><div class="title">Active (7D)</div><div class="num">{active_7d}</div></div>
+            <div class="card"><div class="title">Active (30D)</div><div class="num">{active_30d}</div></div>
+            <div class="card c-new-24"><div class="title">New (24H)</div><div class="num">{new_24h}</div><div class="sub">joined today</div></div>
+            <div class="card c-new-7"><div class="title">New (7D)</div><div class="num">{new_7d}</div></div>
+            <div class="card c-new-30"><div class="title">New (30D)</div><div class="num">{new_30d}</div></div>
+            <div class="card c-blocked"><div class="title">Blocked</div><div class="num">{blocked}</div></div>
         </div>
     </body>
     </html>
@@ -159,4 +167,4 @@ if __name__ == '__main__':
     init_db()
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
-        
+    
